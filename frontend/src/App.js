@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Index from './pages/Index';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Upload from './pages/Upload';
@@ -23,7 +24,7 @@ function App() {
         <Route path="/results" element={token ? <Results /> : <Navigate to="/login" />} />
         <Route path="/history" element={token ? <History /> : <Navigate to="/login" />} />
         <Route path="/test" element={<Test />} />
-        <Route path="/" element={<Navigate to={token ? "/upload" : "/login"} />} />
+        <Route path="/" element={<Index />} />
       </Routes>
     </Router>
   );

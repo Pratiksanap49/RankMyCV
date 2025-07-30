@@ -62,22 +62,89 @@ export default function Upload() {
   };
 
   return (
-    <div className="upload-container">
-      <h2>Upload CVs & Rank</h2>
-      <p style={{ textAlign: 'center', marginBottom: '2rem', color: '#666' }}>
-        Upload multiple CV files (.pdf or .docx) and get AI-powered rankings based on your job description.
-      </p>
-      <form onSubmit={handleSubmit}>
-        <input type="file" multiple accept=".pdf,.docx" onChange={handleFileChange} />
-        <textarea placeholder="Job Description" value={jobDescription} onChange={e => setJobDescription(e.target.value)} required />
-        <input type="text" placeholder="Required Keywords (comma separated)" value={requiredKeywords} onChange={e => setRequiredKeywords(e.target.value)} />
-        <input type="text" placeholder="Optional Keywords (comma separated)" value={optionalKeywords} onChange={e => setOptionalKeywords(e.target.value)} />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Processing...' : 'Rank CVs'}
+    <div className="upload-container modern-upload">
+      <div className="upload-header">
+        <h2>Upload & Rank CVs</h2>
+        <p>Upload multiple CV files and get AI-powered rankings based on your job description</p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="upload-form">
+        <div className="form-group">
+          <label htmlFor="files">Upload CV Files</label>
+          <div className="file-upload-area">
+            <input 
+              type="file" 
+              id="files"
+              multiple 
+              accept=".pdf,.docx" 
+              onChange={handleFileChange}
+              className="file-input"
+            />
+            <div className="file-upload-text">
+              <div className="upload-icon">📄</div>
+              <p>Click to select files or drag and drop</p>
+              <p className="file-types">Supports .pdf and .docx files</p>
+            </div>
+          </div>
+          {files.length > 0 && (
+            <div className="selected-files">
+              <p>Selected files ({files.length}):</p>
+              <ul>
+                {files.map((file, index) => (
+                  <li key={index}>{file.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="jobDescription">Job Description</label>
+          <textarea 
+            id="jobDescription"
+            placeholder="Enter the job description to match against..." 
+            value={jobDescription} 
+            onChange={e => setJobDescription(e.target.value)} 
+            required 
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="requiredKeywords">Required Keywords (Optional)</label>
+          <input 
+            type="text" 
+            id="requiredKeywords"
+            placeholder="e.g., JavaScript, React, Node.js" 
+            value={requiredKeywords} 
+            onChange={e => setRequiredKeywords(e.target.value)} 
+          />
+          <small>Comma-separated keywords that must be present</small>
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="optionalKeywords">Optional Keywords (Optional)</label>
+          <input 
+            type="text" 
+            id="optionalKeywords"
+            placeholder="e.g., TypeScript, Docker, AWS" 
+            value={optionalKeywords} 
+            onChange={e => setOptionalKeywords(e.target.value)} 
+          />
+          <small>Comma-separated keywords that are nice to have</small>
+        </div>
+        
+        <button type="submit" className="upload-button" disabled={loading}>
+          {loading ? 'Processing CVs...' : 'Rank CVs'}
         </button>
       </form>
-      {error && <div className="error">{error}</div>}
-      {loading && <div className="message">Processing your CVs... This may take a moment.</div>}
+      
+      {error && <div className="error-message">{error}</div>}
+      {loading && (
+        <div className="loading-message">
+          <div className="loading-spinner"></div>
+          <p>Processing your CVs... This may take a moment.</p>
+        </div>
+      )}
     </div>
   );
 } 

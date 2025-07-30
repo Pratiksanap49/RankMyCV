@@ -15,16 +15,18 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link to="/">RankMyCV</Link>
+      <Link to="/" className="logo">RankMyCV</Link>
       {token ? (
         <>
+          <Link to="/">Home</Link>
           <Link to="/upload">Upload</Link>
           <Link to="/results">Results</Link>
           <Link to="/history">History</Link>
-          <button onClick={handleLogout}>Logout</button>
+          <button onClick={handleLogout} className="logout-btn">Logout</button>
         </>
       ) : (
         <>
+          <Link to="/">Home</Link>
           <Link to="/login">Login</Link>
           <Link to="/signup">Sign Up</Link>
         </>
