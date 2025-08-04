@@ -3,7 +3,6 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const auth = require('../middleware/auth');
-const fs = require('fs');
 const path = require('path');
 const { rankCVWithGroq } = require('../utils/groq');
 const { keywordMatch } = require('../utils/keywordMatch');
@@ -24,7 +23,7 @@ const upload = multer({
   },
 });
 
-// Upload and extract text
+// Endpoint: Upload CV files and extract text
 router.post('/upload', auth, upload.array('files', 10), async (req, res) => {
   try {
     const results = await Promise.all(req.files.map(async (file) => {
@@ -46,24 +45,25 @@ router.post('/upload', auth, upload.array('files', 10), async (req, res) => {
   }
 });
 
-// AI Ranking endpoint
+// Endpoint: Rank CVs using Groq AI (with fallback)
 router.post('/rank', auth, async (req, res) => {
   const { jobDescription, cvs, requiredKeywords = [], optionalKeywords = [] } = req.body;
   const apiKey = process.env.GROQ_API_KEY;
+
   if (!jobDescription || !Array.isArray(cvs)) {
     return res.status(400).json({ message: 'Missing jobDescription or cvs' });
   }
+
   const results = await Promise.all(cvs.map(async (cv) => {
     let score, reason, matchedRequired = [], matchedOptional = [];
     let usedManualMatching = false;
-    
+
     try {
       const groqRes = await rankCVWithGroq(jobDescription, cv.text, apiKey);
       score = groqRes.score;
       reason = groqRes.reason;
       console.log(`✅ Groq API used for ${cv.filename}`);
     } catch (e) {
-      // Fallback to keyword match
       usedManualMatching = true;
       const match = keywordMatch(cv.text, requiredKeywords, optionalKeywords);
       score = match.score;
@@ -72,14 +72,14 @@ router.post('/rank', auth, async (req, res) => {
       matchedOptional = match.matchedOptional;
       console.log(`⚠️ Manual keyword matching used for ${cv.filename} - ${e.message}`);
     }
-    
-    // If Groq succeeded, also compute matched keywords for display
+
+    // Optional keyword analysis even after Groq success
     if (!usedManualMatching && requiredKeywords.length > 0) {
       const match = keywordMatch(cv.text, requiredKeywords, optionalKeywords);
       matchedRequired = match.matchedRequired;
       matchedOptional = match.matchedOptional;
     }
-    
+
     return {
       filename: cv.filename,
       score,
@@ -89,7 +89,8 @@ router.post('/rank', auth, async (req, res) => {
       usedManualMatching
     };
   }));
+
   res.json({ results });
 });
 
-module.exports = router; 
+module.exports = router;
