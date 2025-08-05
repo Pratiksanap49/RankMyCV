@@ -23,7 +23,7 @@ const upload = multer({
   },
 });
 
-// Endpoint: Upload CV files and extract text
+// Upload CVs
 router.post('/upload', auth, upload.array('files', 10), async (req, res) => {
   try {
     const results = await Promise.all(req.files.map(async (file) => {
@@ -45,7 +45,7 @@ router.post('/upload', auth, upload.array('files', 10), async (req, res) => {
   }
 });
 
-// Endpoint: Rank CVs using Groq AI (with fallback)
+// Rank CVs
 router.post('/rank', auth, async (req, res) => {
   const { jobDescription, cvs, requiredKeywords = [], optionalKeywords = [] } = req.body;
   const apiKey = process.env.GROQ_API_KEY;
@@ -73,7 +73,6 @@ router.post('/rank', auth, async (req, res) => {
       console.log(`⚠️ Manual keyword matching used for ${cv.filename} - ${e.message}`);
     }
 
-    // Optional keyword analysis even after Groq success
     if (!usedManualMatching && requiredKeywords.length > 0) {
       const match = keywordMatch(cv.text, requiredKeywords, optionalKeywords);
       matchedRequired = match.matchedRequired;

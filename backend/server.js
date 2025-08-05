@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const cvRoutes = require('./routes/cv');
@@ -18,18 +17,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// API Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cv', cvRoutes);
 app.use('/api/history', historyRoutes);
-
-// Serve frontend static files (production)
-app.use(express.static(path.join(__dirname, '../frontend/build')));
-
-// React routing fallback
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-});
 
 // MongoDB + Start server
 mongoose.connect(process.env.MONGO_URI, {
