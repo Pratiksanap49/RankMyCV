@@ -2,21 +2,26 @@ import mongoose from "mongoose";
 
 const resultSchema = new mongoose.Schema(
     {
-        candidateName: { type: String },
-        email: { type: String },
-        cvScore: {
-            type: Number,
-            required: true
-        },
-        matchedSkills: [{ type: String }],
-        missingSkills: [{ type: String }],
-        reasoning: { type: String },
-        jobId: {
+        userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Job", required: true
+            ref: "User",
+            required: true,
         },
+        jobDescription: {
+            type: String,
+            required: true,
+        },
+        requiredKeywords: [String],
+        cvs: [
+            {
+                fileName: String,
+                score: Number,
+                matchedKeywords: [String],
+            },
+        ],
     },
     { timestamps: true }
 );
 
 export default mongoose.model("Result", resultSchema);
+
