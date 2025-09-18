@@ -58,7 +58,7 @@ export const exportResultCSV = async (req, res) => {
         const { id } = req.params;
         const result = await Result.findById(id);
 
-        if (!result || result.userId.toString() !== req.user.id) {
+        if (!result || result.user.toString() !== req.user.id) {
             return res.status(404).json({ message: "Result not found" });
         }
 
@@ -78,15 +78,17 @@ export const exportResultCSV = async (req, res) => {
             ],
         });
 
-        const records = result.cvs.map((cv) => ({
-            cvName: cv.cvName,
-            semanticScore: cv.semanticScore,
-            keywordScore: cv.keywordScore,
-            finalScore: cv.finalScore,
-            reason: cv.reason,
-            matchedKeywords: cv.matchedKeywords.join(", "),
-            missingKeywords: cv.missingKeywords.join(", "),
-        }));
+        const records = [
+            {
+                cvName: result.cvName,
+                semanticScore: result.semanticScore,
+                keywordScore: result.keywordScore,
+                finalScore: result.finalScore,
+                reason: result.reason || "",
+                matchedKeywords: (result.matchedKeywords || []).join(", "),
+                missingKeywords: (result.missingKeywords || []).join(", "),
+            }
+        ];
 
         await csvWriter.writeRecords(records);
 
@@ -106,7 +108,7 @@ export const exportResultPDF = async (req, res) => {
         const { id } = req.params;
         const result = await Result.findById(id);
 
-        if (!result || result.userId.toString() !== req.user.id) {
+        if (!result || result.user.toString() !== req.user.id) {
             return res.status(404).json({ message: "Result not found" });
         }
 
@@ -121,16 +123,14 @@ export const exportResultPDF = async (req, res) => {
         doc.fontSize(12).text(`Job Description: ${result.jobDescription}`);
         doc.moveDown();
 
-        result.cvs.forEach((cv, index) => {
-            doc.fontSize(14).text(`Candidate ${index + 1}: ${cv.cvName}`, { underline: true });
-            doc.fontSize(12).text(`Semantic Score: ${cv.semanticScore}`);
-            doc.text(`Keyword Score: ${cv.keywordScore}`);
-            doc.text(`Final Score: ${cv.finalScore}`);
-            doc.text(`Reason: ${cv.reason}`);
-            doc.text(`Matched Keywords: ${cv.matchedKeywords.join(", ")}`);
-            doc.text(`Missing Keywords: ${cv.missingKeywords.join(", ")}`);
-            doc.moveDown();
-        });
+        doc.fontSize(14).text(`Candidate: ${result.cvName}`, { underline: true });
+        doc.fontSize(12).text(`Semantic Score: ${result.semanticScore}`);
+        doc.text(`Keyword Score: ${result.keywordScore}`);
+        doc.text(`Final Score: ${result.finalScore}`);
+        doc.text(`Reason: ${result.reason || ""}`);
+        doc.text(`Matched Keywords: ${(result.matchedKeywords || []).join(", ")}`);
+        doc.text(`Missing Keywords: ${(result.missingKeywords || []).join(", ")}`);
+        doc.moveDown();
 
         doc.end();
 
