@@ -1,0 +1,82 @@
+import axios from "axios";
+
+export async function rankCVWithGroq(jobDescription, cvText, requiredKeywords = []) {
+    if (!process.env.GROQ_API_KEY) {
+        throw new Error("Missing GROQ_API_KEY");
+    }
+
+    const prompt = `
+You are an expert recruiter AI.
+
+We will rank CVs using this formula:
+CV Score = (0.6 * SemanticSimilarity) + (0.4 * KeywordMatchScore)
+
+- SemanticSimilarity (0–100): How well the CV semantically matches the job description.
+- KeywordMatchScore (0–100): Percentage of required keywords found in the CV.
+- Final CV Score must follow the formula above.
+
+Instructions:
+1. Calculate SemanticSimilarity (0–100).
+2. Check which required keywords are present in the CV and which are missing.
+3. Compute KeywordMatchScore = (matchedKeywords / totalKeywords) * 100.
+4. Apply the formula to get final CV Score.
+5. Return JSON only in this format:
+{
+  "semanticScore": number,
+  "keywordScore": number,
+  "finalScore": number,
+  "reason": "short explanation",
+  "matchedKeywords": ["list"],
+  "missingKeywords": ["list"]
+}
+
+Job Description:
+${jobDescription}
+
+Required Keywords:
+${requiredKeywords.join(", ")}
+
+Candidate Resume:
+${cvText}
+`;
+
+    const body = {
+        model: "llama-3.3-70b-versatile",
+        messages: [
+            { role: "system", content: "You are an expert CV analyzer." },
+            { role: "user", content: prompt },
+        ],
+        max_tokens: 400,
+        temperature: 0.2,
+    };
+
+
+    const headers = {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+    };
+
+    try {
+        const response = await axios.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            body,
+            { headers }
+        );
+
+        const content = response.data.choices[0].message.content;
+
+        try {
+            // Extract JSON part safely
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("No JSON in response");
+
+            return JSON.parse(jsonMatch[0]);
+        } catch (parseErr) {
+            console.error("❌ Failed to parse Groq response:", content);
+            throw new Error("Groq returned invalid JSON");
+        }
+    } catch (err) {
+        console.error("❌ Groq API error:", err.response?.data || err.message);
+        throw new Error("Groq API failed");
+    }
+}

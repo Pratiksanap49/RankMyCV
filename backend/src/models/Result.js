@@ -1,27 +1,47 @@
+// src/models/resultModel.js
 import mongoose from "mongoose";
 
 const resultSchema = new mongoose.Schema(
     {
-        userId: {
+        user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: true
         },
         jobDescription: {
             type: String,
-            required: true,
+            required: true
         },
-        requiredKeywords: [String],
-        cvs: [
-            {
-                fileName: String,
-                score: Number,
-                matchedKeywords: [String],
-            },
-        ],
+        cvName: {
+            type: String,
+            required: true
+        },
+        cvText: {
+            type: String,
+            required: true
+        },
+
+        semanticScore: {
+            type: Number,
+            min: 0, max: 100,
+            required: true
+        },
+        keywordScore: {
+            type: Number,
+            min: 0, max: 100,
+            required: true
+        },
+        finalScore: {
+            type: Number,
+            min: 0, max: 100,
+            required: true
+        },
+
+        reason: { type: String },
+        matchedKeywords: [String],
+        missingKeywords: [String],
     },
     { timestamps: true }
 );
 
 export default mongoose.model("Result", resultSchema);
-
