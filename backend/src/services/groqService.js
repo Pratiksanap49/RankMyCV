@@ -20,7 +20,9 @@ Instructions:
 2. Check which required keywords are present in the CV and which are missing.
 3. Compute KeywordMatchScore = (matchedKeywords / totalKeywords) * 100.
 4. Apply the formula to get final CV Score.
-5. Return JSON only in this format:
+5. **Return only valid JSON, with no explanation.**
+
+Format:
 {
   "semanticScore": number,
   "keywordScore": number,
@@ -43,17 +45,16 @@ ${cvText}
     const body = {
         model: "llama-3.3-70b-versatile",
         messages: [
-            { role: "system", content: "You are an expert CV analyzer." },
-            { role: "user", content: prompt },
+            { role: "system", content: "You are an expert CV analyzer. Always return raw JSON, no extra text." },
+            { role: "user", content: prompt }
         ],
         max_tokens: 400,
-        temperature: 0.2,
+        temperature: 0.2
     };
-
 
     const headers = {
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
     };
 
     try {
@@ -63,17 +64,16 @@ ${cvText}
             { headers }
         );
 
-        const content = response.data.choices[0].message.content;
+        const content = response.data.choices[0].message.content.trim();
 
+        // Try to parse JSON safely
         try {
-            // Extract JSON part safely
+            return JSON.parse(content);
+        } catch (err) {
+            // Fallback: extract JSON part if extra text exists
             const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error("No JSON in response");
-
+            if (!jsonMatch) throw new Error("No valid JSON in response");
             return JSON.parse(jsonMatch[0]);
-        } catch (parseErr) {
-            console.error("❌ Failed to parse Groq response:", content);
-            throw new Error("Groq returned invalid JSON");
         }
     } catch (err) {
         console.error("❌ Groq API error:", err.response?.data || err.message);
