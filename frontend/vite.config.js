@@ -1,7 +1,15 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+// tailwind.config.js
+import daisyui from "daisyui"; // 👈 Import daisyui at the top
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  // 👇 Use the imported variable here
+  plugins: [daisyui],
+}
