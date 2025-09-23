@@ -1,15 +1,17 @@
-// tailwind.config.js
-import daisyui from "daisyui"; // 👈 Import daisyui at the top
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    // Enforce case-sensitive module resolution
+    caseSensitive: true
   },
-  // 👇 Use the imported variable here
-  plugins: [daisyui],
-}
+  server: {
+    // Enforce case-sensitive routing during development
+    fs: {
+      caseSensitive: true
+    }
+  }
+})
