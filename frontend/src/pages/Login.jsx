@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import API from '../api';
+import API from './api';
 
 function Login() {
     const [formData, setFormData] = useState({ email: '', password: '' });

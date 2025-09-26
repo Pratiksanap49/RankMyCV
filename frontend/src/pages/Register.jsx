@@ -1,7 +1,8 @@
 // src/pages/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import API from '../api';
+// Correct relative path to shared axios instance
+import API from './api';
 
 function Register() {
     const [formData, setFormData] = useState({
