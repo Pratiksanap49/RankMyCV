@@ -12,6 +12,7 @@ function Navbar() {
 
     const links = [
         { to: '/dashboard', label: 'Dashboard' },
+        { to: '/upload', label: 'Upload' },
         { to: '/history', label: 'History' },
     ];
 

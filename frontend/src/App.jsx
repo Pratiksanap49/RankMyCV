@@ -3,6 +3,8 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Upload from './pages/Upload';
+import Results from './pages/Results';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 
@@ -34,6 +36,8 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/upload" element={<Upload />} />
+        <Route path="/results" element={<Results />} />
           <Route path="/history" element={<History />} />
         </Route>
       </Route>
