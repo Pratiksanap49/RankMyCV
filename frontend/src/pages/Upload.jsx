@@ -147,8 +147,10 @@ function Upload() {
 
 		setLoading(true);
 
+		const originalFiles = files.map(({ id, file }) => ({ id, name: file.name, type: file.type, file }));
+
 		try {
-			const parsedCVs = await Promise.all(files.map(async ({ file }) => {
+			const parsedCVs = await Promise.all(files.map(async ({ id, file }) => {
 				let content = '';
 				if (file.type === 'application/pdf') {
 					content = await extractTextFromPDF(file);
@@ -163,6 +165,7 @@ function Upload() {
 				return {
 					name: file.name,
 					content,
+					sourceId: id,
 				};
 			}));
 
@@ -174,8 +177,8 @@ function Upload() {
 
 			const response = await API.post('/results/rank', payload);
 
+			navigate('/results', { state: { ranking: response.data, originals: originalFiles } });
 			resetForm();
-			navigate('/results', { state: { ranking: response.data } });
 		} catch (err) {
 			const message = err.response?.data?.message || err.message || 'Failed to rank resumes.';
 			setError(message);

@@ -29,6 +29,7 @@ export const rankCVs = async (req, res) => {
                 reason: analysis.reason,
                 matchedKeywords: analysis.matchedKeywords,
                 missingKeywords: analysis.missingKeywords,
+                sourceId: cv.sourceId || null,
             });
         }
 

@@ -11,6 +11,7 @@ const cvSchema = new mongoose.Schema({
     reason: { type: String },
     matchedKeywords: [String],
     missingKeywords: [String],
+    sourceId: { type: String },
 });
 
 const resultSchema = new mongoose.Schema(
