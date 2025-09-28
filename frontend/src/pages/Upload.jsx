@@ -5,6 +5,7 @@ import API from './api';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
 import mammoth from 'mammoth/mammoth.browser';
+import JSZip from 'jszip';
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -12,6 +13,24 @@ const ACCEPTED_TYPES = [
 	'application/pdf',
 	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
+
+const isLegacyDoc = (file) => file.name.toLowerCase().endsWith('.doc') && !file.name.toLowerCase().endsWith('.docx');
+
+const compactWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
+
+const parseXmlToText = (xmlString) => {
+	try {
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(xmlString, 'application/xml');
+		if (doc.getElementsByTagName('parsererror').length > 0) {
+			return xmlString.replace(/<[^>]+>/g, ' ');
+		}
+		return doc.documentElement?.textContent || '';
+	} catch (err) {
+		console.error('Failed to parse DOCX XML', err);
+		return xmlString.replace(/<[^>]+>/g, ' ');
+	}
+};
 
 const formatBytes = (bytes) => {
 	if (!Number.isFinite(bytes)) return '0 KB';
@@ -40,8 +59,31 @@ async function extractTextFromPDF(file) {
 
 async function extractTextFromDOCX(file) {
 	const arrayBuffer = await file.arrayBuffer();
-	const { value } = await mammoth.extractRawText({ arrayBuffer });
-	return value.trim();
+
+	try {
+		const { value } = await mammoth.extractRawText({ arrayBuffer });
+		const cleaned = compactWhitespace(value || '');
+		if (cleaned) {
+			return cleaned;
+		}
+	} catch (err) {
+		console.warn('Mammoth failed to extract DOCX text', err);
+	}
+
+	try {
+		const zip = await JSZip.loadAsync(arrayBuffer);
+		const docXml = await zip.file('word/document.xml')?.async('string');
+		if (docXml) {
+			const text = compactWhitespace(parseXmlToText(docXml));
+			if (text) {
+				return text;
+			}
+		}
+	} catch (err) {
+		console.error('JSZip fallback failed for DOCX', err);
+	}
+
+	return '';
 }
 
 function Upload() {
@@ -66,6 +108,11 @@ function Upload() {
 		const rejected = [];
 
 		Array.from(selectedFiles).forEach((file) => {
+			if (isLegacyDoc(file)) {
+				rejected.push(`${file.name} (legacy .doc files are not supported)`);
+				return;
+			}
+
 			if (!ACCEPTED_TYPES.includes(file.type)) {
 				rejected.push(file.name);
 				return;
