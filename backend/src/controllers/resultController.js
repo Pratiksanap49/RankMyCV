@@ -33,6 +33,8 @@ export const rankCVs = async (req, res) => {
             });
         }
 
+        analyzedCVs.sort((a, b) => b.finalScore - a.finalScore);
+
         // Save session
         const result = await Result.create({
             user: req.user.id,
@@ -43,7 +45,7 @@ export const rankCVs = async (req, res) => {
 
         // Return sorted CVs for frontend
         res.json({
-            sessionId: result._id,
+            sessionId: result._id.toString(),
             jobDescription: result.jobDescription,
             requiredKeywords: result.requiredKeywords,
             cvs: analyzedCVs.sort((a, b) => b.finalScore - a.finalScore),
@@ -146,6 +148,57 @@ export const exportResultPDF = async (req, res) => {
         });
     } catch (err) {
         console.error("❌ Error exporting PDF:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const getMyResults = async (req, res) => {
+    try {
+        const results = await Result.find({ user: req.user.id }).sort({ createdAt: -1 }).lean();
+
+        const summaries = results.map((result) => {
+            const sortedCVs = [...(result.cvs || [])].sort((a, b) => b.finalScore - a.finalScore);
+            const topCandidate = sortedCVs[0];
+            return {
+                id: result._id.toString(),
+                createdAt: result.createdAt,
+                jobDescription: result.jobDescription,
+                requiredKeywords: result.requiredKeywords,
+                candidateCount: sortedCVs.length,
+                topCandidate: topCandidate ? {
+                    name: topCandidate.cvName,
+                    finalScore: topCandidate.finalScore,
+                } : null,
+            };
+        });
+
+        res.json(summaries);
+    } catch (err) {
+        console.error("❌ Error fetching results:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const getResultById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await Result.findById(id).lean();
+
+        if (!result || result.user.toString() !== req.user.id) {
+            return res.status(404).json({ message: "Result not found" });
+        }
+
+        const sortedCvs = [...(result.cvs || [])].sort((a, b) => b.finalScore - a.finalScore);
+
+        res.json({
+            sessionId: result._id.toString(),
+            jobDescription: result.jobDescription,
+            requiredKeywords: result.requiredKeywords,
+            cvs: sortedCvs,
+            createdAt: result.createdAt,
+        });
+    } catch (err) {
+        console.error("❌ Error fetching result by id:", err);
         res.status(500).json({ message: "Server error" });
     }
 };

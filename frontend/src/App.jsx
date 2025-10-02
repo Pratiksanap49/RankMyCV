@@ -36,8 +36,8 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/upload" element={<Upload />} />
-        <Route path="/results" element={<Results />} />
+          <Route path="/upload" element={<Upload />} />
+          <Route path="/results/:id?" element={<Results />} />
           <Route path="/history" element={<History />} />
         </Route>
       </Route>

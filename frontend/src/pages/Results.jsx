@@ -1,6 +1,6 @@
 // src/pages/Results.jsx
-import React, { useCallback, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import API from './api';
 
 const scoreClasses = (score) => {
@@ -12,9 +12,13 @@ const scoreClasses = (score) => {
 function Results() {
 	const navigate = useNavigate();
 	const location = useLocation();
-	const ranking = location.state?.ranking;
+	const { id: resultId } = useParams();
+	const locationRanking = location.state?.ranking;
+	const [ranking, setRanking] = useState(locationRanking || null);
 	const originals = location.state?.originals || [];
 	const [downloading, setDownloading] = useState(false);
+	const [loadingSession, setLoadingSession] = useState(!locationRanking);
+	const [loadError, setLoadError] = useState('');
 	const createdAt = useMemo(() => {
 		if (!ranking?.createdAt) return null;
 		try {
@@ -62,13 +66,15 @@ function Results() {
 		};
 	}, [ranking]);
 
+	const sessionId = ranking?.sessionId || resultId;
+
 	const downloadReport = useCallback(async (format) => {
-		if (!ranking?.sessionId) return;
+		if (!sessionId) return;
 		setDownloading(true);
 		const extension = format === 'csv' ? 'csv' : 'pdf';
 
 		try {
-			const response = await API.get(`/results/${ranking.sessionId}/export/${extension}`, {
+			const response = await API.get(`/results/${sessionId}/export/${extension}`, {
 				responseType: 'blob',
 			});
 
@@ -76,7 +82,7 @@ function Results() {
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = `rankmycv-session-${ranking.sessionId}.${extension}`;
+			link.download = `rankmycv-session-${sessionId}.${extension}`;
 			document.body.appendChild(link);
 			link.click();
 			link.remove();
@@ -86,7 +92,7 @@ function Results() {
 		} finally {
 			setDownloading(false);
 		}
-	}, [ranking]);
+	}, [sessionId]);
 
 	const downloadCV = useCallback((cv) => {
 		if (!cv) return;
@@ -122,11 +128,53 @@ function Results() {
 		}
 	}, [originalFileMap]);
 
+	useEffect(() => {
+		if (ranking || !resultId) {
+			setLoadingSession(false);
+			return;
+		}
+
+		let cancelled = false;
+		(async () => {
+			try {
+				setLoadingSession(true);
+				const response = await API.get(`/results/${resultId}`);
+				if (!cancelled) {
+					setRanking(response.data);
+					setLoadError('');
+				}
+			} catch (err) {
+				console.error('Failed to load session', err);
+				if (!cancelled) {
+					const message = err.response?.data?.message || 'Unable to load this session.';
+					setLoadError(message);
+				}
+			} finally {
+				if (!cancelled) {
+					setLoadingSession(false);
+				}
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [ranking, resultId]);
+
+	if (loadingSession) {
+		return (
+			<div className="flex flex-col items-center justify-center gap-3 py-16">
+				<span className="loading loading-spinner loading-lg text-primary" />
+				<p className="text-sm text-neutral/60">Loading ranking results…</p>
+			</div>
+		);
+	}
+
 	if (!ranking) {
 		return (
 			<div className="max-w-4xl mx-auto text-center space-y-4">
 				<h1 className="text-3xl font-bold text-neutral">No ranking available yet</h1>
-				<p className="text-sm text-neutral/70">Start by uploading resumes and running a new analysis.</p>
+				<p className="text-sm text-neutral/70">{loadError || 'Start by uploading resumes and running a new analysis.'}</p>
 				<button type="button" className="btn btn-primary" onClick={() => navigate('/upload')}>
 					Go to upload
 				</button>

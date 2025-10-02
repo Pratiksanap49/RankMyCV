@@ -224,7 +224,7 @@ function Upload() {
 
 			const response = await API.post('/results/rank', payload);
 
-			navigate('/results', { state: { ranking: response.data, originals: originalFiles } });
+			navigate(`/results/${response.data.sessionId}`, { state: { ranking: response.data, originals: originalFiles } });
 			resetForm();
 		} catch (err) {
 			const message = err.response?.data?.message || err.message || 'Failed to rank resumes.';
