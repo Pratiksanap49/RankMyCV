@@ -2,17 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global layout helpers so pages like Dashboard (minimal classes) still look styled */
 html, body, #root { height: 100%; }
 body {
 	@apply bg-base-200 text-base-content antialiased;
 }
-
-/* Utility helpers */
 .page-container { @apply max-w-6xl mx-auto px-6 py-8; }
 
-/* Navbar backdrop mimic (only visible if backdrop supported) */
 .navbar { @apply backdrop-blur bg-base-100/80 shadow; }
-
-/* Debug helper: apply a subtle outline to #root to confirm CSS loaded */
 #root.debug-border { outline: 2px dashed hotpink; }

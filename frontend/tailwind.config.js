@@ -7,14 +7,13 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                /* system professional stack */
+
                 sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
             },
         },
     },
     plugins: [require('daisyui')],
     daisyui: {
-        // Single fixed professional theme (no toggle)
         themes: [
             {
                 rankmycv: {

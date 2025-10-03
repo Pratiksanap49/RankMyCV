@@ -9,7 +9,6 @@ import History from './pages/History';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 
-// A simple layout for pages with a Navbar
 const AppLayout = () => (
   <>
     <Navbar />
