@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Results from './pages/Results';
+import History from './pages/History';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 
@@ -17,11 +18,6 @@ const AppLayout = () => (
     </main>
   </>
 );
-
-// Placeholder for History page
-function History() {
-  return <h1>Ranking History</h1>;
-}
 
 
 function App() {

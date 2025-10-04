@@ -11,4 +11,7 @@ API.interceptors.request.use((req) => {
     return req;
 });
 
+export const getHistorySessions = () => API.get('/results/my-results');
+export const deleteHistorySession = (id) => API.delete(`/results/${id}`);
+
 export default API;

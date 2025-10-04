@@ -182,6 +182,11 @@ function Results() {
 		);
 	}
 
+    // Defensive: log if cvs missing
+    if (!ranking.cvs) {
+        console.warn('Ranking object loaded but cvs array is missing:', ranking);
+    }
+
 	return (
 		<div className="space-y-8">
 			<div className="flex flex-wrap items-start justify-between gap-4">
@@ -259,7 +264,7 @@ function Results() {
 							</tr>
 						</thead>
 						<tbody>
-							{ranking.cvs.map((cv, index) => (
+							{(ranking.cvs || []).map((cv, index) => (
 								<tr key={cv.sourceId || `${cv.cvName}-${index}`} className={index === 0 ? 'bg-primary/5' : ''}>
 									<td>
 										<div className="font-semibold text-neutral">{cv.cvName}</div>

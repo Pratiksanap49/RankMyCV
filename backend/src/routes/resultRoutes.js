@@ -1,6 +1,6 @@
 // src/routes/resultRoutes.js
 import express from "express";
-import { rankCVs, exportResultPDF, exportResultCSV, getMyResults, getResultById } from "../controllers/resultController.js";
+import { rankCVs, exportResultPDF, exportResultCSV, getMyResults, getResultById, deleteResult } from "../controllers/resultController.js";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
@@ -13,6 +13,9 @@ router.get("/my-results", authMiddleware, getMyResults);
 
 // Get a single session detail
 router.get("/:id", authMiddleware, getResultById);
+
+// Delete a session
+router.delete("/:id", authMiddleware, deleteResult);
 
 // Export a session
 router.get("/:id/export/csv", authMiddleware, exportResultCSV);

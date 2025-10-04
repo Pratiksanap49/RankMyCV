@@ -1,5 +1,6 @@
 // src/controllers/resultController.js
-import Result from "../models/result.js";
+// Ensure correct case-sensitive import for environments where filesystem is case-sensitive
+import Result from "../models/Result.js";
 import { rankCVWithGroq } from "../services/groqService.js";
 import { createObjectCsvWriter } from "csv-writer";
 import PDFDocument from "pdfkit";
@@ -115,37 +116,47 @@ export const exportResultPDF = async (req, res) => {
             return res.status(404).json({ message: "Result not found" });
         }
 
-        const filePath = path.join("exports", `result_${id}.pdf`);
-        if (!fs.existsSync("exports")) fs.mkdirSync("exports");
+        // Stream PDF directly to response (no temp file needed)
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=\"result_${id}.pdf\"`);
 
-        const doc = new PDFDocument();
-        doc.pipe(fs.createWriteStream(filePath));
+        const doc = new PDFDocument({ autoFirstPage: false });
+        doc.on("error", (err) => {
+            console.error("❌ PDF generation error:", err);
+            if (!res.headersSent) {
+                res.status(500).end();
+            } else {
+                res.end();
+            }
+        });
+        doc.pipe(res);
 
-        doc.fontSize(18).text("CV Ranking Report", { align: "center" });
+        doc.addPage();
+        doc.fontSize(20).text("CV Ranking Report", { align: "center" });
         doc.moveDown();
-        doc.fontSize(12).text(`Job Description: ${result.jobDescription}`);
-        doc.text(`Required Keywords: ${result.requiredKeywords.join(", ")}`);
+        doc.fontSize(12).text(`Session ID: ${result._id.toString()}`);
+        doc.text(`Created At: ${result.createdAt}`);
+        doc.moveDown();
+        doc.fontSize(12).text("Job Description:");
+        doc.fontSize(10).text(result.jobDescription, { align: "left" });
+        doc.moveDown();
+        doc.fontSize(12).text("Required Keywords:");
+        doc.fontSize(10).text(result.requiredKeywords.join(", ") || "—");
         doc.moveDown();
 
-        result.cvs.forEach((cv, index) => {
-            doc.fontSize(14).text(`Candidate ${index + 1}: ${cv.cvName}`, { underline: true });
-            doc.fontSize(12).text(`Semantic Score: ${cv.semanticScore}`);
-            doc.text(`Keyword Score: ${cv.keywordScore}`);
-            doc.text(`Final Score: ${cv.finalScore}`);
-            doc.text(`Reason: ${cv.reason || ""}`);
-            doc.text(`Matched Keywords: ${(cv.matchedKeywords || []).join(", ")}`);
-            doc.text(`Missing Keywords: ${(cv.missingKeywords || []).join(", ")}`);
+        const sorted = [...(result.cvs || [])].sort((a, b) => b.finalScore - a.finalScore);
+        sorted.forEach((cv, index) => {
             doc.moveDown();
+            doc.fontSize(14).text(`Candidate #${index + 1}: ${cv.cvName}`, { underline: true });
+            doc.fontSize(10).text(`Final Score: ${cv.finalScore}`);
+            doc.text(`Semantic Score: ${cv.semanticScore}`);
+            doc.text(`Keyword Score: ${cv.keywordScore}`);
+            if (cv.reason) doc.text(`Reason: ${cv.reason}`);
+            doc.text(`Matched Keywords: ${(cv.matchedKeywords || []).join(', ') || '—'}`);
+            doc.text(`Missing Keywords: ${(cv.missingKeywords || []).join(', ') || '—'}`);
         });
 
         doc.end();
-
-        doc.on("finish", () => {
-            res.download(filePath, (err) => {
-                if (err) console.error("❌ Error downloading PDF:", err);
-                fs.unlinkSync(filePath);
-            });
-        });
     } catch (err) {
         console.error("❌ Error exporting PDF:", err);
         res.status(500).json({ message: "Server error" });
@@ -199,6 +210,22 @@ export const getResultById = async (req, res) => {
         });
     } catch (err) {
         console.error("❌ Error fetching result by id:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// Delete a session/result
+export const deleteResult = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await Result.findById(id);
+        if (!result || result.user.toString() !== req.user.id) {
+            return res.status(404).json({ message: "Result not found" });
+        }
+        await result.deleteOne();
+        res.json({ message: "Session deleted", id });
+    } catch (err) {
+        console.error("❌ Error deleting result:", err);
         res.status(500).json({ message: "Server error" });
     }
 };
